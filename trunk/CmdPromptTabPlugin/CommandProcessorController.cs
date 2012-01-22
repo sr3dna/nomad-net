@@ -15,6 +15,7 @@ namespace Nomad.Plugin
     private static object EventBeforeCommand = new object();
     private static object EventCurrentDirectoryChanged = new object();
     private static object EventIdle = new object();
+    private static object EventSubstitute = new object();
 
     private int _MaxLines = 255;
     private bool _NoEcho; // = false;
@@ -168,6 +169,13 @@ namespace Nomad.Plugin
         Idle(this, e);
     }
 
+    protected virtual void OnSubstitute(SubstituteEventArgs e)
+    {
+      var Substitute = Events[EventBeforeCommand] as EventHandler<SubstituteEventArgs>;
+      if (Substitute != null)
+        Substitute(this, e);
+    }
+
     private void Event_ApplicationIdle(object sender, EventArgs e)
     {
       if (!_OutputBox.IsDisposed && !_OutputBox.Disposing)
@@ -241,16 +249,16 @@ namespace Nomad.Plugin
         case Keys.Return:
           ReplaceOutputText(_OutputBox.TextLength - _InputBuilder.Length, _InputBuilder.Length, string.Empty);
 
-          BeforeCommandEventArgs Args = new BeforeCommandEventArgs(_InputBuilder.ToString());
+          BeforeCommandEventArgs BeforeCommandArgs = new BeforeCommandEventArgs(_InputBuilder.ToString());
           _InputBuilder.Length = 0;
           _InputIndex = 0;
 
-          OnBeforeCommand(Args);
-          if (!Args.Cancel)
+          OnBeforeCommand(BeforeCommandArgs);
+          if (!BeforeCommandArgs.Cancel)
           {
             if (EchoOff)
-              _OutputBox.AppendText(Args.Command + "\r\n");
-            WriteLineToStandardInput(Args.Command);
+              _OutputBox.AppendText(BeforeCommandArgs.Command + "\r\n");
+            WriteLineToStandardInput(BeforeCommandArgs.Command);
           }
 
           _OutputBox.Select(int.MaxValue, 0);
@@ -308,6 +316,67 @@ namespace Nomad.Plugin
               _InputBuilder.Length--;
 
             UpdateCaretPosition();
+          }
+          break;
+        case Keys.Tab:
+          e.SuppressKeyPress = true;
+          int StartIndex = -1;
+          int QuoteIndex = -1;
+          int QuoteCount = 0;
+
+          for (int I = _InputIndex - 1; I >= 0; I--)
+          {
+            if ((_InputBuilder[I] == ' ') && (StartIndex < 0))
+              StartIndex = I;
+            else
+              if (_InputBuilder[I] == '"')
+              {
+                if (QuoteIndex < 0)
+                  QuoteIndex = I;
+                QuoteCount++;
+              }
+          }
+
+          if (QuoteCount % 2 == 0)
+          {
+            QuoteIndex = -1;
+            StartIndex++;
+          }
+          else
+            StartIndex = QuoteIndex + 1;
+
+          int EndIndex = _InputIndex;
+          while ((EndIndex < _InputBuilder.Length) &&
+            ((QuoteIndex < 0) || (_InputBuilder[EndIndex] != '"')) && ((QuoteIndex >= 0) || (_InputBuilder[EndIndex] != ' ')))
+            EndIndex++;
+
+          if (StartIndex < _InputIndex)
+          {
+            string OriginalString = _InputBuilder.ToString(StartIndex, _InputIndex - StartIndex);
+            SubstituteEventArgs SubstituteArgs = new SubstituteEventArgs(OriginalString);
+            OnSubstitute(SubstituteArgs);
+
+            string ReplaceString = SubstituteArgs.SubstituteString;
+            if (!string.Equals(OriginalString, ReplaceString))
+            {
+              if (QuoteIndex >= 0)
+              {
+                if (EndIndex >= _InputBuilder.Length)
+                  ReplaceString += '"';
+              }
+              else
+              {
+                if (ReplaceString.IndexOf(' ') >= 0)
+                  ReplaceString = '"' + ReplaceString + '"';
+              }
+
+              int ReplaceLength = EndIndex - StartIndex;
+              ReplaceOutputText(_OutputBox.TextLength - _InputBuilder.Length + StartIndex, ReplaceLength, ReplaceString);
+              _InputBuilder.Remove(StartIndex, ReplaceLength);
+              _InputBuilder.Insert(StartIndex, ReplaceString);
+              _InputIndex = StartIndex + ReplaceString.Length;
+              UpdateCaretPosition();
+            }
           }
           break;
         case Keys.V | Keys.Control:
@@ -764,6 +833,12 @@ namespace Nomad.Plugin
       add { Events.AddHandler(EventIdle, value); }
       remove { Events.RemoveHandler(EventIdle, value); }
     }
+
+    public event EventHandler<SubstituteEventArgs> Substitute
+    {
+      add { Events.AddHandler(EventSubstitute, value); }
+      remove { Events.RemoveHandler(EventSubstitute, value); }
+    }
   }
 
   public class BeforeCommandEventArgs : CancelEventArgs
@@ -786,6 +861,22 @@ namespace Nomad.Plugin
           throw new ArgumentNullException();
         _Command = value;
       }
+    }
+  }
+
+  public class SubstituteEventArgs : EventArgs
+  {
+    private string _SubstituteString;
+
+    public SubstituteEventArgs(string substituteString)
+    {
+      _SubstituteString = substituteString;
+    }
+
+    public string SubstituteString
+    {
+      get { return _SubstituteString ?? string.Empty; }
+      set { _SubstituteString = value; }
     }
   }
 }
