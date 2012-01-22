@@ -28,6 +28,14 @@ namespace Nomad.Plugin
         return Result;
       }
 
+      protected override void WndProc(ref Message m)
+      {
+        if (m.Msg == Messages.WM_PASTE)
+          _Owner.PasteFromClipboard();
+        else
+          base.WndProc(ref m);
+      }
+
       public void UpdateTabCaption()
       {
         ITab Tab = (ITab)GetService(typeof(ITab));

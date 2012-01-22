@@ -313,26 +313,7 @@ namespace Nomad.Plugin
         case Keys.V | Keys.Control:
         case Keys.Insert | Keys.Control:
           e.SuppressKeyPress = true;
-          string ClipboardText;
-
-          try
-          {
-            ClipboardText = Clipboard.GetText();
-          }
-          catch (ExternalException)
-          {
-            break;
-          }
-
-          if (!string.IsNullOrEmpty(ClipboardText))
-          {
-            int LineBreakIndex = ClipboardText.IndexOfAny(new char[] { '\r', '\n' });
-            if (LineBreakIndex < 0)
-              InsertToInputBuffer(ClipboardText);
-            else
-              if (LineBreakIndex > 0)
-                InsertToInputBuffer(ClipboardText.Substring(0, LineBreakIndex));
-          }
+          PasteFromClipboard();
           break;
         default:
           e.Handled = true;
@@ -493,6 +474,35 @@ namespace Nomad.Plugin
       }
 
       return Result;
+    }
+
+    public void PasteFromClipboard()
+    {
+      string ClipboardText;
+
+      try
+      {
+        ClipboardText = Clipboard.GetText();
+      }
+      catch (ExternalException)
+      {
+        return;
+      }
+
+      if (!string.IsNullOrEmpty(ClipboardText))
+      {
+        if (Idling)
+        {
+          int LineBreakIndex = ClipboardText.IndexOfAny(new char[] { '\r', '\n' });
+          if (LineBreakIndex < 0)
+            InsertToInputBuffer(ClipboardText);
+          else
+            if (LineBreakIndex > 0)
+              InsertToInputBuffer(ClipboardText.Substring(0, LineBreakIndex));
+        }
+        else
+          WriteToStandardInput(ClipboardText);
+      }
     }
 
     public bool Start(string workingDirectory)
