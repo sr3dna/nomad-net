@@ -4,6 +4,7 @@ using System.Text;
 using System.Windows.Forms;
 using Microsoft.Win32;
 using Nomad.Commons.Controls;
+using Nomad.Commons.IO;
 using Nomad.Shared;
 
 namespace Nomad.Plugin
@@ -111,6 +112,53 @@ namespace Nomad.Plugin
     {
       ((OutputTextBox)OutputBox).UpdateTabCaption();
       base.OnCurrentDirectoryChanged(e);
+    }
+
+    protected override void OnSubstitute(SubstituteEventArgs e)
+    {
+      PathType SubstituteType = PathHelper.GetPathType(e.SubstituteString);
+      if ((SubstituteType != PathType.Invalid) && ((SubstituteType & PathType.File) > 0))
+      {
+        try
+        {
+          string SubstituteDirectory;
+          switch (SubstituteType & ~PathType.File)
+          {
+            case PathType.Volume:
+              SubstituteDirectory = e.SubstituteString;
+              break;
+            case PathType.Volume | PathType.Relative:
+              SubstituteDirectory = Path.Combine(Path.GetPathRoot(CurrentDirectory), e.SubstituteString);
+              break;
+            case PathType.Relative:
+              SubstituteDirectory = Path.Combine(CurrentDirectory, e.SubstituteString);
+              break;
+            default:
+              SubstituteDirectory = null;
+              break;
+          }
+
+          if (!string.IsNullOrEmpty(SubstituteDirectory))
+          {
+            string Prefix = Path.GetFileName(SubstituteDirectory);
+            SubstituteDirectory = Path.GetDirectoryName(SubstituteDirectory);
+            foreach (string NextFileName in Directory.GetFileSystemEntries(SubstituteDirectory, Prefix + "*"))
+            {
+              e.SubstituteString = Path.Combine(Path.GetDirectoryName(e.SubstituteString), Path.GetFileName(NextFileName));
+              break;
+            }
+          }
+        }
+        catch (ArgumentException)
+        {
+          // Skip errors while working with path strings
+        }
+        catch (IOException)
+        {
+          // Skip PathTooLongException error and all populating directory errors
+        }
+      }
+      base.OnSubstitute(e);
     }
 
     public override Encoding DefaultEncoding
