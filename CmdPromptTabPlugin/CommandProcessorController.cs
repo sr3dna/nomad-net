@@ -50,17 +50,17 @@ namespace Nomad.Plugin
       if (!disposing)
         return;
 
-      if (_CmdProcess != null)
-      {
-        _CmdProcess.StandardInput.Close();
-        if (!_CmdProcess.HasExited)
-          _CmdProcess.Kill();
-        _CmdProcess.Close();
-        _CmdProcess = null;
-      }
-
       lock (_DisposeLock)
       {
+        if (_CmdProcess != null)
+        {
+          _CmdProcess.StandardInput.Close();
+          if (!_CmdProcess.HasExited)
+            _CmdProcess.Kill();
+          _CmdProcess.Close();
+          _CmdProcess = null;
+        }
+
         if (!_OutputBox.IsDisposed && !_OutputBox.Disposing)
         {
           if (_OutputBox.InvokeRequired)
