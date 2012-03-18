@@ -32,14 +32,17 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Nomad.Commons">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\Nomad.Commons.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Nomad.FileSystem">
-      <HintPath>..\Lib\Nomad.FileSystem.dll</HintPath>
+    <Reference Include="Nomad.Shared">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\Nomad.Shared.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Nomad.Interop">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\Nomad.Interop.dll</HintPath>
       <Private>False</Private>
     </Reference>

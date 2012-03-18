@@ -31,17 +31,17 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Nomad.Commons, Version=3.0.5.305, Culture=neutral, PublicKeyToken=3804ceda7f00255c, processorArchitecture=MSIL">
+    <Reference Include="Nomad.Commons">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\Nomad.Commons.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Nomad.FileSystem, Version=3.0.5.92, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Nomad.Shared">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Lib\Nomad.FileSystem.dll</HintPath>
+      <HintPath>..\Lib\Nomad.Shared.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Nomad.Interop, Version=3.0.5.349, Culture=neutral, PublicKeyToken=d785ef1aa78f2144, processorArchitecture=MSIL">
+    <Reference Include="Nomad.Interop">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\Nomad.Interop.dll</HintPath>
       <Private>False</Private>
