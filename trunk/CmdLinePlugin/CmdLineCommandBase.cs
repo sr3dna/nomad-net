@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using Nomad.Shared;
 
-namespace Nomad.Plugin
+namespace Nomad.Plugin.CmdLinePlugin
 {
   public abstract class CmdLineCommandBase : Component
   {

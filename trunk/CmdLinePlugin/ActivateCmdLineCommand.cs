@@ -6,7 +6,7 @@ using Nomad.Commons.Controls.Actions;
 using Nomad.Commons.Plugin;
 using Nomad.Shared;
 
-namespace Nomad.Plugin
+namespace Nomad.Plugin.CmdLinePlugin
 {
   [Guid("A13EC0A6-9770-4D0F-B66D-5ECB5A92D9AC")]
   [ExportExtension(typeof(IAction))]
