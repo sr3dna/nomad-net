@@ -5,7 +5,7 @@ using Nomad.Commons.Controls.Actions;
 using Nomad.Commons.Plugin;
 using Nomad.Shared;
 
-namespace Nomad.Plugin
+namespace Nomad.Plugin.CmdLinePlugin
 {
   [Guid("241B8F64-654C-49C6-A8C2-D1AC1D8857EE")]
   [ExportExtension(typeof(IAction))]
@@ -20,7 +20,11 @@ namespace Nomad.Plugin
     {
       CommandLinePanel CommandLine = CurrentCommandLine;
       if ((CommandLine != null) && !string.IsNullOrEmpty(CommandLine.CommandLine))
-        return CommandLine.ExecuteCommandLine();
+      {
+        if (!CommandLine.ExecuteCommandLine())
+          CommandLine.Select();
+        return true;
+      }
       if (_OpenCommand != null)
         return _OpenCommand.Execute(source, target);
       return false;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
@@ -6,12 +7,15 @@ using System.IO;
 using System.Runtime.Remoting;
 using System.Text;
 using System.Windows.Forms;
+using Nomad.Commons.Collections;
 using Nomad.Commons.Controls;
 using Nomad.Commons.IO;
 using Nomad.FileSystem.Virtual;
+using Nomad.Plugin.CmdLinePlugin.Properties;
 using Nomad.Shared;
+using Nomad.Shared.Dialogs;
 
-namespace Nomad.Plugin
+namespace Nomad.Plugin.CmdLinePlugin
 {
   [ToolboxItem(false)]
   public class CommandLinePanel : TableLayoutPanel
@@ -20,6 +24,7 @@ namespace Nomad.Plugin
     private Label _DirectoryLabel;
     private ComboBox _CommandBox;
     private int _HistoryDepth;
+    private MruCollection<string> _History;
 
     public CommandLinePanel()
     {
@@ -58,6 +63,14 @@ namespace Nomad.Plugin
       Controls.Add(_CommandBox, 1, 0);
 
       ResumeLayout();
+    }
+
+    protected override void OnCreateControl()
+    {
+      base.OnCreateControl();
+      _History = new MruCollection<string>(Settings.Default.History, _HistoryDepth);
+      _CommandBox.DataSource = _History.ToArray();
+      _CommandBox.SelectedIndex = -1;
     }
 
     private void UpdateDirectoryLabel()
@@ -177,7 +190,8 @@ namespace Nomad.Plugin
               }
               catch (ArgumentException)
               {
-                // Skip invalid FolderPath value, but it is nice to show warning here
+                // Skip invalid FolderPath value
+                MessageDialog.Show(FindForm(), Resources.sInvalidPath, Resources.sCaptionWarning, MessageDialog.ButtonsOk, MessageBoxIcon.Warning);
                 return false;
               }
             }
@@ -197,9 +211,10 @@ namespace Nomad.Plugin
           Process.Start(StartInfo);
           return true;
         }
-        catch (Win32Exception)
+        catch (Win32Exception e)
         {
-          // Skip any start process error, but it is nice to show warning here
+          // Skip any start process error
+          MessageDialog.Show(FindForm(), e.Message, Resources.sCaptionWarning, MessageDialog.ButtonsOk, MessageBoxIcon.Warning);
           return false;
         }
       }
@@ -235,9 +250,9 @@ namespace Nomad.Plugin
             return true;
           break;
         case Keys.Return:
-          if (ExecuteCommandLine())
-            return true;
-          break;
+          if (!ExecuteCommandLine())
+            _CommandBox.SelectAll();
+          return true;
         case Keys.Alt | Keys.Down:
           _CommandBox.DroppedDown = !_CommandBox.DroppedDown;
           return true;
@@ -250,17 +265,24 @@ namespace Nomad.Plugin
       string Line = CommandLine;
       if (ExecuteCommandLine(Line))
       {
-        // Remember command line in combo box drop down
+        _History.Add(Line);
+        _CommandBox.DataSource = Settings.Default.History = _History.ToArray();
+        _CommandBox.DroppedDown = false;
         _CommandBox.SelectedIndex = -1;
-        _CommandBox.Items.Remove(Line);
-        _CommandBox.Items.Insert(0, Line);
-        for (int I = _CommandBox.Items.Count - 1; I >= _HistoryDepth; I--)
-          _CommandBox.Items.RemoveAt(I);
-        // Clear command line
-        CommandLine = string.Empty;
         return true;
       }
       return false;
+    }
+
+    protected override void Select(bool directed, bool forward)
+    {
+      if (!directed)
+      {
+        _CommandBox.SelectAll();
+        _CommandBox.Select();
+      }
+      else
+        base.Select(directed, forward);
     }
 
     public string CommandLine
@@ -327,8 +349,17 @@ namespace Nomad.Plugin
 
     public int HistoryDepth
     {
-      get { return _HistoryDepth; }
-      set { _HistoryDepth = Math.Max(value, 0); }
+      get { return _History != null ? _History.Capacity : _HistoryDepth; }
+      set
+      {
+        _HistoryDepth = Math.Max(value, 0);
+        if (_History != null)
+        {
+          _History.Capacity = _HistoryDepth;
+          _CommandBox.DataSource = _History.ToArray();
+          _CommandBox.SelectedIndex = -1;
+        }
+      }
     }
   }
 }

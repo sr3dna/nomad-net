@@ -9,7 +9,7 @@ using Nomad.Commons.Plugin;
 using Nomad.FileSystem.Virtual;
 using Nomad.Shared;
 
-namespace Nomad.Plugin
+namespace Nomad.Plugin.CmdLinePlugin
 {
   public abstract class AppendNameToCmdLineCommandBase : CmdLineCommandBase
   {

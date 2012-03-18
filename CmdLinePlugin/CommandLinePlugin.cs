@@ -5,7 +5,7 @@ using System.Windows.Forms;
 using Nomad.Commons.Plugin;
 using Nomad.Shared;
 
-namespace Nomad.Plugin
+namespace Nomad.Plugin.CmdLinePlugin
 {
   [Guid("2C3041DD-BA02-408D-A020-09BC7CFBB9B1")]
   [ExportExtension(typeof(IRunOnce), Configure = true)]
