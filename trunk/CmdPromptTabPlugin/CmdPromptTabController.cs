@@ -5,9 +5,10 @@ using System.Windows.Forms;
 using Microsoft.Win32;
 using Nomad.Commons.Controls;
 using Nomad.Commons.IO;
+using Nomad.Plugin.CmdPrompt.Properties;
 using Nomad.Shared;
 
-namespace Nomad.Plugin
+namespace Nomad.Plugin.CmdPrompt
 {
   public class CmdPromptTabController : CommandProcessorController
   {
@@ -92,6 +93,8 @@ namespace Nomad.Plugin
       Result.DragOver += OutputBox_DragOver;
       Result.DragLeave += OutputBox_DragLeave;
       Result.DragDrop += OutputBox_DragDrop;
+      Result.DataBindings.Add(new Binding("BackColor", Settings.Default, "BackColor", true, DataSourceUpdateMode.Never));
+      Result.DataBindings.Add(new Binding("ForeColor", Settings.Default, "ForeColor", true, DataSourceUpdateMode.Never));
       return Result;
     }
 

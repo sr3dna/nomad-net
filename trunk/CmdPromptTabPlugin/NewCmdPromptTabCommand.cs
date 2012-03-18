@@ -9,7 +9,7 @@ using Nomad.Commons.Plugin;
 using Nomad.FileSystem.Virtual;
 using Nomad.Shared;
 
-namespace Nomad.Plugin
+namespace Nomad.Plugin.CmdPrompt
 {
   [Guid("65C71558-4FB5-4913-93B8-BAF81075344A")]
   [ExportExtension(typeof(IAction))]

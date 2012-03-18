@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace Nomad.Plugin
+namespace Nomad.Plugin.CmdPrompt
 {
   public class CommandProcessorController : Component
   {
