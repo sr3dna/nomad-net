@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Nomad.Commons.Controls.Actions;
 using Nomad.Commons.Plugin;
-using Nomad.Shared;
 
 namespace Nomad.Plugin.CmdLinePlugin
 {

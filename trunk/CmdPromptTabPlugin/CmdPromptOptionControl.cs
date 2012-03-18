@@ -10,10 +10,12 @@ using Nomad.Plugin.CmdPrompt.Properties;
 namespace Nomad.Plugin.CmdPrompt
 {
   [Guid("21211CA6-8FDD-4F0D-9882-FED6CD232436")]
+  [ExportExtension(typeof(IPersistComponentSettings))]
+  [ExtensionDependency(typeof(NewCmdPromptTabCommand))]
   [DisplayName("Command Prompt")]
   [Description("Command Prompt Colors")]
   [ToolboxBitmap(typeof(NewCmdPromptTabCommand), "application_xp_terminal.png")]
-  [ExportExtension(typeof(IPersistComponentSettings))]
+  [ToolboxItem(false)]
   public partial class CmdPromptOptionControl : UserControl, IPersistComponentSettings
   {
     public CmdPromptOptionControl()

@@ -27,6 +27,7 @@ namespace Nomad.Plugin.CmdLinePlugin.Properties
 
   [Guid("1305A76C-D68B-4604-97CC-5F6903276429")]
   [ExportExtension(typeof(ApplicationSettingsBase))]
+  [ExtensionDependency(typeof(CommandLinePlugin))]
   public class SettingsReference : IObjectReference
   {
     public object GetRealObject(StreamingContext context)
