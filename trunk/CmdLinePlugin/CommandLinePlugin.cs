@@ -12,6 +12,7 @@ namespace Nomad.Plugin
   public class CommandLinePlugin : IRunOnce
   {
     private static int _MaxCommandLength = 4096;
+    private static int _HistoryDepth = 15;
 
     private static void AddCommandLineToTab(ITab tab)
     {
@@ -19,7 +20,8 @@ namespace Nomad.Plugin
       if (FolderView != null)
       {
         CommandLinePanel CmdLinePanel = new CommandLinePanel();
-        CmdLinePanel.MaxCommandLength = Math.Max(_MaxCommandLength, 0);
+        CmdLinePanel.MaxCommandLength = _MaxCommandLength;
+        CmdLinePanel.HistoryDepth = _HistoryDepth;
         tab.DockControl(DockStyle.Bottom, CmdLinePanel);
         FolderView.CurrentFolderChanged += (sender2, e2) => CmdLinePanel.CurrentFolder = FolderView.CurrentFolder;
       }
@@ -38,6 +40,14 @@ namespace Nomad.Plugin
     {
       get { return _MaxCommandLength; }
       set { _MaxCommandLength = value; }
+    }
+
+    [ConfigurationProperty("historyDepth", DefaultValue = 15)]
+    [IntegerValidator(MinValue = 0)]
+    public int HistoryDepth
+    {
+      get { return _HistoryDepth; }
+      set { _HistoryDepth = value; }
     }
   }
 }

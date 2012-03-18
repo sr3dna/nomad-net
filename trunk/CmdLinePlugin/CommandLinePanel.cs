@@ -14,30 +14,39 @@ using Nomad.Shared;
 namespace Nomad.Plugin
 {
   [ToolboxItem(false)]
-  public class CommandLinePanel : Panel
+  public class CommandLinePanel : TableLayoutPanel
   {
     private IVirtualFolder _CurrentFolder;
     private Label _DirectoryLabel;
-    private TextBox _CommandBox;
+    private ComboBox _CommandBox;
+    private int _HistoryDepth;
 
     public CommandLinePanel()
     {
+      AutoSize = true;
+      AutoSizeMode = AutoSizeMode.GrowAndShrink;
       BackColor = SystemColors.Window;
       BorderStyle = BorderStyle.FixedSingle;
       Font = SystemFonts.IconTitleFont;
-      Padding = new Padding(2);
+      Padding = new Padding(0, 0, 0, 2);
+
+      ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+      ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+      RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
       _DirectoryLabel = new Label();
       _DirectoryLabel.AutoSize = true;
       _DirectoryLabel.BackColor = SystemColors.Window;
       _DirectoryLabel.TextAlign = ContentAlignment.MiddleLeft;
       _DirectoryLabel.Dock = DockStyle.Left;
+      _DirectoryLabel.Margin = new Padding(0);
 
-      _CommandBox = new TextBox();
-      _CommandBox.BorderStyle = BorderStyle.None;
-      _CommandBox.Dock = DockStyle.Fill;
+      _CommandBox = new ComboBox();
+      _CommandBox.FlatStyle = FlatStyle.Flat;
+      _CommandBox.Dock = DockStyle.Top;
       _CommandBox.TabStop = false;
       _CommandBox.AllowDrop = true;
+      _CommandBox.Margin = new Padding(0);
       _CommandBox.DragEnter += CommandBox_DragEnter;
       _CommandBox.DragOver += CommandBox_DragOver;
       _CommandBox.DragLeave += CommandBox_DragLeave;
@@ -45,9 +54,8 @@ namespace Nomad.Plugin
 
       SuspendLayout();
 
-      Height = _CommandBox.Height + 10;
-      Controls.Add(_CommandBox);
-      Controls.Add(_DirectoryLabel);
+      Controls.Add(_DirectoryLabel, 0, 0);
+      Controls.Add(_CommandBox, 1, 0);
 
       ResumeLayout();
     }
@@ -198,34 +206,57 @@ namespace Nomad.Plugin
       return false;
     }
 
+    private bool SelectActivePanel()
+    {
+      ITwoPanelTab CurrentTwoPanelTab = GetService(typeof(ITab)) as ITwoPanelTab;
+      if ((CurrentTwoPanelTab != null) && CurrentTwoPanelTab.CurrentPanel.Activate())
+        return true;
+      else
+        if ((Parent != null) && Parent.SelectNextControl(this, true, true, false, true))
+          return true;
+      return false;
+    }
+
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
       switch (keyData)
       {
         case Keys.Escape:
+          if (!_CommandBox.DroppedDown)
+          {
+            _CommandBox.Text = string.Empty;
+            if (SelectActivePanel())
+              return true;
+          }
+          break;
         case Keys.Up:
         case Keys.Down:
-          if (keyData == Keys.Escape)
-            _CommandBox.Clear();
-          ITwoPanelTab CurrentTwoPanelTab = GetService(typeof(ITab)) as ITwoPanelTab;
-          if ((CurrentTwoPanelTab != null) && CurrentTwoPanelTab.CurrentPanel.Activate())
+          if (!_CommandBox.DroppedDown && SelectActivePanel())
             return true;
-          else
-            if ((Parent != null) && Parent.SelectNextControl(this, true, true, false, true))
-              return true;
           break;
         case Keys.Return:
           if (ExecuteCommandLine())
             return true;
           break;
+        case Keys.Alt | Keys.Down:
+          _CommandBox.DroppedDown = !_CommandBox.DroppedDown;
+          return true;
       }
       return base.ProcessCmdKey(ref msg, keyData);
     }
 
     public bool ExecuteCommandLine()
     {
-      if (ExecuteCommandLine(CommandLine))
+      string Line = CommandLine;
+      if (ExecuteCommandLine(Line))
       {
+        // Remember command line in combo box drop down
+        _CommandBox.SelectedIndex = -1;
+        _CommandBox.Items.Remove(Line);
+        _CommandBox.Items.Insert(0, Line);
+        for (int I = _CommandBox.Items.Count - 1; I >= _HistoryDepth; I--)
+          _CommandBox.Items.RemoveAt(I);
+        // Clear command line
         CommandLine = string.Empty;
         return true;
       }
@@ -291,7 +322,13 @@ namespace Nomad.Plugin
     public int MaxCommandLength
     {
       get { return _CommandBox.MaxLength; }
-      set { _CommandBox.MaxLength = value; }
+      set { _CommandBox.MaxLength = Math.Max(value, 0); }
+    }
+
+    public int HistoryDepth
+    {
+      get { return _HistoryDepth; }
+      set { _HistoryDepth = Math.Max(value, 0); }
     }
   }
 }
