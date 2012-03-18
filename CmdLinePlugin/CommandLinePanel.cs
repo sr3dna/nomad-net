@@ -287,5 +287,11 @@ namespace Nomad.Plugin
         UpdateDirectoryLabel();
       }
     }
+
+    public int MaxCommandLength
+    {
+      get { return _CommandBox.MaxLength; }
+      set { _CommandBox.MaxLength = value; }
+    }
   }
 }
