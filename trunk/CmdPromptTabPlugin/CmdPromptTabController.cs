@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
 using System.Text;
 using System.Windows.Forms;
 using Microsoft.Win32;
@@ -13,7 +15,8 @@ namespace Nomad.Plugin.CmdPrompt
   public class CmdPromptTabController : CommandProcessorController
   {
     // In order to support duplicate tab functionality, control added to tab should implement ICloneable interface
-    private class OutputTextBox : TextBoxEx, ICloneable
+    [Serializable]
+    private class OutputTextBox : TextBoxEx, ICloneable, ISerializable
     {
       private CommandProcessorController _Owner;
 
@@ -51,6 +54,44 @@ namespace Nomad.Plugin.CmdPrompt
       {
         CommandProcessorController Result = _Owner.Clone();
         return Result.Running ? Result.OutputBox : null;
+      }
+
+      [Serializable]
+      private class OutputTextBoxSerializer : ISerializable, IObjectReference
+      {
+        private bool _Initialized;
+        private object _RealObject;
+        private string _CurrentDirectory;
+
+        protected OutputTextBoxSerializer(SerializationInfo info, StreamingContext context)
+        {
+          _CurrentDirectory = info.GetString("CurrentDirectory");
+        }
+
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+          throw new NotSupportedException();
+        }
+
+        public object GetRealObject(StreamingContext context)
+        {
+          // GetRealObject called twice during deserialization for unknown reason
+          if (!_Initialized)
+          {
+            CommandProcessorController Controller = new CmdPromptTabController();
+            if (Controller.Start(_CurrentDirectory))
+              _RealObject = Controller.OutputBox;
+            _Initialized = true;
+          }
+          return _RealObject;
+        }
+      }
+
+      [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+      public void GetObjectData(SerializationInfo info, StreamingContext context)
+      {
+        info.SetType(typeof(OutputTextBoxSerializer));
+        info.AddValue("CurrentDirectory", _Owner.CurrentDirectory);
       }
 
       public string PermanentCaption { get; set; }
