@@ -1,0 +1,1 @@
+Powerful file manager for Microsoft Windows
